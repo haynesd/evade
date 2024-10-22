@@ -1,0 +1,8 @@
+# To create a virtual environment in Python, you can use the following command:
+# python -m venv venv
+# pipip install -r requirements.txt
+
+pandas==2.0.3
+scapy==2.5.0
+matplotlib==3.7.1
+sklearn==1.3.0
