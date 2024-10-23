@@ -37,7 +37,7 @@ nad
 To setup your python on your workstation:
 
 ### 1. Install a python venv on linux distro
-#### note: if you are using the latest git bash, there is no need to install venv, goto step 3.
+#### note: if you are using the latest [git](https://git-scm.com/downloads) bash, there is no need to install venv, goto step 3.
 ```python -m venv venv```
 ### 2. Activate the virtual python directory and cd into the newly created directory
 #### ```source venv/bin/activate```

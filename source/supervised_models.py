@@ -3,26 +3,28 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.svm import SVC
 
+
 def train_random_forest(X_train, y_train, X_test, y_test):
     """
     This function trains a Random Forest Classifier on a given training 
     dataset (X_train, y_train), and evaluates the classifier's performance on a test 
     dataset (X_test, y_test). It returns the trained model, accuracy, AUC, and the 
     time taken for both training and prediction.
-    
+
     Args:
         X_train (numpy.ndarray or pandas.DataFrame): Feature matrix for training.
         y_train (numpy.ndarray or pandas.Series): Labels for training.
         X_test (numpy.ndarray or pandas.DataFrame): Feature matrix for testing.
         y_test (numpy.ndarray or pandas.Series): Labels for testing.
-    
+
     Returns:
         RandomForestClassifier: Trained Random Forest model.
         float: Accuracy on the test set.
-        float: AUC on the test set.
         float: Time taken to train the model (in seconds).
         float: Time taken to predict on the test set (in seconds).
     """
+
+
 def train_random_forest(X_train, y_train, X_test, y_test):
     """
     Train Random Forest Classifier and evaluate its performance.
@@ -57,23 +59,21 @@ def train_random_forest(X_train, y_train, X_test, y_test):
     return rf_model, accuracy, rf_train_time, rf_pred_time
 
 
-
 def train_svm(X_train, y_train, X_test, y_test):
     """
     This function trains a Support Vector Machine (SVM) classifier and evaluates 
     its performance on a test set. It returns the trained SVM model, accuracy, AUC, 
     and time taken for both training and prediction.
-    
+
     Args:
         X_train (numpy.ndarray or pandas.DataFrame): Feature matrix for training.
         y_train (numpy.ndarray or pandas.Series): Labels for training.
         X_test (numpy.ndarray or pandas.DataFrame): Feature matrix for testing.
         y_test (numpy.ndarray or pandas.Series): Labels for testing.
-    
+
     Returns:
         SVC: Trained SVM model.
         float: Accuracy on the test set.
-        float: AUC on the test set.
         float: Time taken to train the model (in seconds).
         float: Time taken to predict on the test set (in seconds).
     """

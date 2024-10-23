@@ -12,3 +12,6 @@ venv/
 
 # Ignore images
 *.png
+
+# Ignore data payload files
+*.csv
