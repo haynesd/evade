@@ -4,10 +4,14 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
-def perform_pca_and_plot(X_train, y_train, feature_names, n_components=2):
-    # Standardize the data
+def perform_pca_and_plot(X_train, y_train, feature_names, X_test=None, n_components=2):
+    # Standardize the training data
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
+
+    # If X_test is provided, standardize it using the same scaler
+    if X_test is not None:
+        X_test_scaled = scaler.transform(X_test)
 
     # PCA parameters
     whiten = False
@@ -15,9 +19,14 @@ def perform_pca_and_plot(X_train, y_train, feature_names, n_components=2):
     pca = PCA(n_components=n_components,
               whiten=whiten, random_state=random_state)
 
-    # Apply PCA transformation
-    X_train_PCA = pca.fit_transform(X_train_scaled)
-    x_train_PCA = pd.DataFrame(data=X_train_PCA, index=range(len(X_train)))
+    # Apply PCA transformation on training data
+    X_train_pca = pca.fit_transform(X_train_scaled)
+    X_train_pca_df = pd.DataFrame(data=X_train_pca, index=range(len(X_train)))
+
+    # If X_test is provided, apply the PCA transformation
+    X_test_pca = None
+    if X_test is not None:
+        X_test_pca = pca.transform(X_test_scaled)
 
     # Print explained variance
     explained_variance = pca.explained_variance_ratio_
@@ -49,7 +58,7 @@ def perform_pca_and_plot(X_train, y_train, feature_names, n_components=2):
 
     # Scatter plot of the first two principal components
     plt.figure(figsize=(8, 6))
-    plt.scatter(x_train_PCA.iloc[:, 0], x_train_PCA.iloc[:,
+    plt.scatter(X_train_pca_df.iloc[:, 0], X_train_pca_df.iloc[:,
                 1], c=y_train, cmap='viridis', alpha=0.7)
     plt.colorbar(label='Target')
     plt.xlabel("Principal Component 1")
@@ -57,3 +66,5 @@ def perform_pca_and_plot(X_train, y_train, feature_names, n_components=2):
     plt.title("PCA of X_train Data (First 2 Components)")
     plt.grid()
     plt.show()
+
+    return X_train_pca, X_test_pca
