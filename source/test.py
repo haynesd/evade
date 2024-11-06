@@ -1,3 +1,4 @@
+import data_pca
 import supervised_models
 import unsupervised_models
 import data_preparation
@@ -19,8 +20,11 @@ def run_test():
     # Path to test.csv file
     csv_file = os.path.join(data_folder, "ACI-IoT-2023-Payload.csv")
 
-    X_train, y_train, X_test, y_test = data_processing.load_and_preprocess_data(
+    X_train, y_train, X_test, y_test, feature_names = data_processing.load_and_preprocess_data(
         csv_file)
+
+    # Perform PCA and plot
+    data_pca.perform_pca_and_plot(X_train, y_train, feature_names)
 
     # Check shapes before calling the model training
     print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
