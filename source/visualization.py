@@ -1,6 +1,7 @@
 
 from matplotlib import pyplot as plt
 
+
 def visualize_results(model_names, accuracies, train_times, pred_times):
     """
     Visualize the results of model comparisons and save the plot to a file.
@@ -33,3 +34,23 @@ def visualize_results(model_names, accuracies, train_times, pred_times):
     # Save the plot to a file (e.g., PNG format)
     plt.savefig('model_comparison.png')
 
+
+def plot_hdbscan_results(X, cluster_labels):
+    """
+    Visualize the HDBSCAN clustering results.
+    """
+    plt.figure(figsize=(10, 6))
+    unique_labels = set(cluster_labels)
+    for label in unique_labels:
+        if label == -1:
+            # Noise points
+            color = 'k'
+            label_name = "Noise"
+        else:
+            color = plt.cm.jet(float(label) / max(unique_labels))
+            label_name = f"Cluster {label}"
+        plt.scatter(X[cluster_labels == label, 0], X[cluster_labels ==
+                    label, 1], c=color, label=label_name, alpha=0.6)
+    plt.legend()
+    plt.title("HDBSCAN Clustering Results")
+    plt.show()

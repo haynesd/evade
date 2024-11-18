@@ -22,6 +22,7 @@ def load_and_preprocess_data(csv_file):
     except Exception as e:
         print(f"An unexpected error occured: {e}")
 
+    # Select desired features to use in training data
     selected_features = [
         'sport', 'dsport', 'sttl', 'total_len', 'stime', 'srcip_numeric',
         'dstip_numeric', 'protocol_m_tcp', 'protocol_m_udp', 'payload_size',
@@ -42,7 +43,7 @@ def load_and_preprocess_data(csv_file):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # Split the data into training and test sets
+    # Split the data into training 70% and test sets 30%
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.3, random_state=42, stratify=y)
 

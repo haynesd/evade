@@ -30,7 +30,7 @@ def perform_pca_and_plot(X_train, y_train, feature_names, X_test=None, n_compone
 
     # Print explained variance
     explained_variance = pca.explained_variance_ratio_
-    cumulative_variance = explained_variance.cumsum()  # Cumulative variance explained
+    cumulative_variance = explained_variance.cumsum()
     print("Explained variance for each component:")
     for i, variance in enumerate(explained_variance, start=1):
         print(
@@ -45,7 +45,6 @@ def perform_pca_and_plot(X_train, y_train, feature_names, X_test=None, n_compone
     print("\nFeature loadings for the first two principal components:")
     print(loadings)
 
-    # Optional: visualize feature loadings
     plt.figure(figsize=(10, 6))
     plt.bar(feature_names, loadings["PC1"], alpha=0.6, label="PC1")
     plt.bar(feature_names, loadings["PC2"], alpha=0.6, label="PC2")

@@ -83,23 +83,16 @@ def run_test():
     train_times.append(lof_train_time)
     pred_times.append(lof_pred_time)
 
-    # Train and evaluate the One-Class SVM (one-class classifier unsupervised)
-    print("Training OneClassSVM...")
-    one_class_svm_model, one_class_svm_acc, one_class_train_time, one_class_pred_time = unsupervised_models.train_one_class_svm(
-        X_train, X_test)
-    print(f"OneClassSVM Accuracy: {one_class_svm_acc:.2f}")
-    print(
-        f"OneClassSVM Training Time: {one_class_train_time:.2f} seconds, Prediction Time: {one_class_pred_time:.2f} seconds")
-
-    # Append One-Class SVM results
-    model_names.append("OneClassSVM")
-    accuracies.append(one_class_svm_acc)
-    train_times.append(one_class_train_time)
-    pred_times.append(one_class_pred_time)
-
-    # Visualize the results
-    visualization.visualize_results(
-        model_names, accuracies, train_times, pred_times)
+    # Train and evaluate HDBSCAN (unsupervised) with PCA-transformed data
+    print("Training HDBSCAN...")
+    hdbscan_model, hdbscan_acc, hdbscan_train_time, hdbscan_pred_time = unsupervised_models.train_hdbscan(
+        X_train_pca, X_test_pca, min_samples=5, min_cluster_size=10
+    )
+    print(f"HDBSCAN Accuracy: {hdbscan_acc:.2f}")
+    model_names.append("HDBSCAN")
+    accuracies.append(hdbscan_acc)
+    train_times.append(hdbscan_train_time)
+    pred_times.append(hdbscan_pred_time)
 
 
 if __name__ == "__main__":
