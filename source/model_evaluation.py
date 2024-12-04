@@ -9,3 +9,4 @@ def compare_models(model_results):
     print("\nComparison of Model Results:")
     for model_name, auc_score in model_results.items():
         print(f"{model_name} ROC AUC: {auc_score}")
+

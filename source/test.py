@@ -98,29 +98,4 @@ def run_test():
 if __name__ == "__main__":
     run_test()
 
-    # SVM Test take over 3 hours
-    # Train and evaluate the SVM
-    # print("Training SVM...")
-    # svm_model, svm_acc, svm_auc, svm_train_time, svm_pred_time = supervised_models.train_svm(X_train, y_train, X_test, y_test)
-    # print(f"SVM Accuracy: {svm_acc:.2f}, AUC: {svm_auc:.2f}")
-    # print(f"SVM Training Time: {svm_train_time:.2f} seconds, Prediction Time: {svm_pred_time:.2f} seconds")
-
-    # # Append SVM results
-    # model_names.append("SVM")
-    # accuracies.append(svm_acc)
-    # aucs.append(svm_auc)
-    # train_times.append(svm_train_time)
-    # pred_times.append(svm_pred_time)
-
-    # Train and evaluate the One-Class SVM (one-class classifier unsupervised)
-    # print("Training OneClassSVM...")
-    # one_class_svm_model, one_class_svm_acc, one_class_train_time, one_class_pred_time = unsupervised_models.train_one_class_svm(X_train, X_test)
-    # print(f"OneClassSVM Accuracy: {one_class_svm_acc:.2f}")
-    # print(f"OneClassSVM Training Time: {one_class_train_time:.2f} seconds, Prediction Time: {one_class_pred_time:.2f} seconds")
-
-    # # Append One-Class SVM results
-    # model_names.append("OneClassSVM")
-    # accuracies.append(one_class_svm_acc)
-    # aucs.append(0)  # No AUC for unsupervised
-    # train_times.append(one_class_train_time)
-    # pred_times.append(one_class_pred_time)
+    
