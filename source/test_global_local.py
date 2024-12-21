@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
 import hdbscan
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import warnings
@@ -14,12 +15,12 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 def evaluate_model(y_true, y_pred, model_name):
     """
     Evaluate the performance of a model using accuracy, precision, recall, and F1-score.
-    
+
     Args:
         y_true (array-like): Ground truth labels.
         y_pred (array-like): Predicted labels (-1 for anomalies, 1 for normal points).
         model_name (str): Name of the model being evaluated.
-    
+
     Returns:
         None
     """
@@ -38,7 +39,8 @@ def evaluate_model(y_true, y_pred, model_name):
     print(f"  Precision: {precision:.2f}")
     print(f"  Recall: {recall:.2f}")
     print(f"  F1-Score: {f1:.2f}")
-    print(f"  Confusion Matrix:\n{confusion_matrix(y_true_binary, y_pred_binary)}\n")
+    print(
+        f"  Confusion Matrix:\n{confusion_matrix(y_true_binary, y_pred_binary)}\n")
 
 
 def run_test():
@@ -66,19 +68,22 @@ def run_test():
     y_test_converted = [1 if y == 1 else -1 for y in y_test]
 
     # Global Anomalies Detection with Elliptic Envelope
-    print("Training Elliptic Envelope for global anomalies...")
-    elliptic_env = EllipticEnvelope(contamination=0.1, random_state=42)
-    elliptic_env.fit(X_train_pca)
+    print("Training Isolation Forest for global anomalies...")
+    isolation_forest = IsolationForest(contamination=0.1, random_state=42)
+    isolation_forest.fit(X_train_pca)
 
     # Predict global anomalies
-    global_anomalies = elliptic_env.predict(X_test_pca)  # -1 for anomalies, 1 for inliers
+    global_anomalies = isolation_forest.predict(
+        X_test_pca)  # -1 for anomalies, 1 for inliers
     print(f"Global anomalies detected: {sum(global_anomalies == -1)}")
-    evaluate_model(y_test_converted, global_anomalies, "Elliptic Envelope (Global)")
+    evaluate_model(y_test_converted, global_anomalies,
+                   "Elliptic Envelope (Global)")
 
     # Local Anomalies Detection with HDBSCAN
     print("Training HDBSCAN for local anomalies...")
     hdbscan_model = hdbscan.HDBSCAN(min_samples=5, min_cluster_size=10)
-    hdbscan_labels = hdbscan_model.fit_predict(X_test_pca)  # -1 for noise (local anomalies)
+    hdbscan_labels = hdbscan_model.fit_predict(
+        X_test_pca)  # -1 for noise (local anomalies)
 
     # Convert HDBSCAN labels to match Elliptic Envelope (-1 for anomalies, 1 for normal)
     hdbscan_preds = [1 if label != -1 else -1 for label in hdbscan_labels]
@@ -87,12 +92,13 @@ def run_test():
 
     # Plot global and local anomalies
     plt.figure(figsize=(12, 6))
-    plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c='blue', label='Normal Points', alpha=0.5)
+    plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1],
+                c='blue', label='Normal Points', alpha=0.5)
     plt.scatter(
         X_test_pca[global_anomalies == -1, 0],
         X_test_pca[global_anomalies == -1, 1],
         c='red',
-        label='Global Anomalies (Elliptic Envelope)',
+        label='Global Anomalies (Isolation Forest)',
         alpha=0.7,
     )
     plt.scatter(
