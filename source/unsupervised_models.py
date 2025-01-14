@@ -1,96 +1,113 @@
 import numpy as np
-from time import time
-from sklearn.svm import OneClassSVM
 from sklearn.covariance import EllipticEnvelope
-from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
-import hdbscan
-
-
-def train_one_class_svm(X_train, X_test):
-    """
-    Train One-Class Support Vector Machine (SVM) and predict anomalies on the test set.
-    """
-    start_train = time()
-    one_class_svm = OneClassSVM(gamma='auto')
-    one_class_svm.fit(X_train)
-    train_time = time() - start_train
-
-    start_pred = time()
-    y_pred = one_class_svm.predict(X_test)  # -1 for anomalies, 1 for inliers
-    pred_time = time() - start_pred
-
-    return one_class_svm, y_pred, train_time, pred_time
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
 
 
 def train_isolation_forest(X_train, X_test):
     """
-    Train Isolation Forest and predict anomalies on the test set.
+    Train Isolation Forest and make predictions.
+
+    Parameters:
+        X_train (array-like): Training features.
+        X_test (array-like): Test features.
+
+    Returns:
+        model: Trained Isolation Forest model.
+        y_pred: Binary predictions for the test set.
+        decision_scores: Decision function scores for the test set.
     """
-    start_time = time()  # Record training start time
-    model = IsolationForest(random_state=42)
+    model = IsolationForest(contamination=0.1, random_state=42)
     model.fit(X_train)
-    train_time = time() - start_time  # Calculate training time
 
-    # Predict anomalies: -1 -> anomaly, 1 -> normal
-    pred_start_time = time()
-    y_pred = model.predict(X_test)
-    pred_time = time() - pred_start_time  # Calculate prediction time
+    # Generate decision scores
+    decision_scores = model.decision_function(X_test)
 
-    return model, y_pred, train_time, pred_time
+    # Threshold-based predictions (customizable threshold)
+    threshold = np.percentile(decision_scores, 5)  # Top 5% anomalies
+    y_pred = (decision_scores < threshold).astype(int)  # Invert for anomalies
+
+    return model, y_pred, decision_scores
 
 
 def train_elliptic_envelope(X_train, X_test):
     """
-    Train Elliptic Envelope and predict anomalies on the test set.
+    Train Elliptic Envelope and make predictions.
+
+    Parameters:
+        X_train (array-like): Training features.
+        X_test (array-like): Test features.
+
+    Returns:
+        model: Trained Elliptic Envelope model.
+        y_pred: Binary predictions for the test set.
+        decision_scores: Decision function scores for the test set.
     """
-    start_train = time()  # Correctly calls time()
-    model = EllipticEnvelope()
+    model = EllipticEnvelope(
+        contamination=0.1, support_fraction=0.9, random_state=42)
     model.fit(X_train)
-    train_time = time() - start_train  # Training time
 
-    # Predict: -1 -> anomaly, 1 -> normal
-    start_pred = time()
-    y_pred = model.predict(X_test)
-    pred_time = time() - start_pred  # Prediction time
+    # Generate decision scores
+    decision_scores = model.decision_function(X_test)
 
-    return model, y_pred, train_time, pred_time
+    # Threshold-based predictions (customizable threshold)
+    threshold = np.percentile(decision_scores, 5)  # Top 5% anomalies
+    y_pred = (decision_scores < threshold).astype(int)  # Invert for anomalies
+
+    return model, y_pred, decision_scores
 
 
-def train_local_outlier_factor(X_train, X_test):
+def train_lof(X_train, X_test):
     """
-    Train Local Outlier Factor and predict anomalies on the test set.
+    Train Local Outlier Factor (LOF) and make predictions.
+
+    Parameters:
+        X_train (array-like): Training features (required for fitting).
+        X_test (array-like): Test features.
+
+    Returns:
+        model: Trained Local Outlier Factor model.
+        y_pred: Binary predictions for the test set.
+        decision_scores: Decision function scores for the test set.
     """
-    start_train = time()
+    # Initialize LOF with novelty detection enabled
     lof = LocalOutlierFactor(n_neighbors=20, contamination=0.1, novelty=True)
-    lof.fit(X_train)  # Train with LOF
-    train_time = time() - start_train
+    lof.fit(X_train)
 
-    start_pred = time()
-    y_pred = lof.predict(X_test)  # -1 for anomalies, 1 for inliers
-    pred_time = time() - start_pred
+    # Generate decision scores
+    decision_scores = -lof.decision_function(X_test)  # Negate for consistency
 
-    return lof, y_pred, train_time, pred_time
+    # Threshold-based predictions (customizable threshold)
+    threshold = np.percentile(decision_scores, 95)  # Top 5% anomalies
+    y_pred = (decision_scores > threshold).astype(int)
+
+    return lof, y_pred, decision_scores
 
 
-def train_hdbscan(X_train, X_test, min_samples=5, min_cluster_size=10, outlier_threshold=0.9):
+def train_one_class_svm(X_train, X_test):
     """
-    Train HDBSCAN for anomaly detection using clustering and outlier scores.
+    Train One-Class SVM and make predictions.
+
+    Parameters:
+        X_train (array-like): Training features.
+        X_test (array-like): Test features.
+
+    Returns:
+        model: Trained One-Class SVM model.
+        y_pred: Binary predictions for the test set.
+        decision_scores: Decision function scores for the test set.
     """
-    # Training HDBSCAN
-    start_time = time()
-    model = hdbscan.HDBSCAN(min_samples=min_samples,
-                            min_cluster_size=min_cluster_size,
-                            prediction_data=True)
+    model = OneClassSVM(kernel="rbf", gamma=0.1,
+                        nu=0.05)  # Adjust `gamma` and `nu` as needed
     model.fit(X_train)
-    train_time = time() - start_time
 
-    # Predicting on test data using outlier scores
-    pred_start_time = time()
-    outlier_scores = hdbscan.approximate_predict(
-        model, X_test)[1]  # Get outlier scores
-    y_pred = np.array(
-        [-1 if score > outlier_threshold else 1 for score in outlier_scores])
-    pred_time = time() - pred_start_time
+    # Generate decision scores (distance to the decision boundary)
+    decision_scores = model.decision_function(X_test)
 
-    return model, y_pred, train_time, pred_time
+    # Predict anomalies (-1 for anomaly, 1 for normal)
+    y_pred = model.predict(X_test)
+    # Convert to binary format: 1 for anomaly, 0 for normal
+    y_pred = [1 if x == -1 else 0 for x in y_pred]
+
+    return model, y_pred, decision_scores

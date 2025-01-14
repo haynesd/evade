@@ -1,98 +1,129 @@
-import data_pca
-import unsupervised_models
-import data_processing
-import numpy as np
 import os
-import matplotlib.pyplot as plt
-from time import time
+import pandas as pd
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 import warnings
-import model_evaluation
+import ACI_IoT_Dataset_2023
+import CIC_IoT_Dataset_2023
+import unsupervised_models
 
+# Suppress runtime warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
-def run_test():
-    base_dir = os.getcwd()  # Current working directory
-    data_folder = os.path.join(base_dir, "data")
-    csv_file = os.path.join(data_folder, "ACI-IoT-2023-Payload.csv")
+def evaluate_model(y_test, y_pred, decision_scores=None, model_name="Model"):
+    """
+    Evaluate the model's performance using precision, recall, F1-score, and ROC-AUC.
 
-    # Load and preprocess data
-    X_train, y_train, X_test, y_test, feature_names = data_processing.load_and_preprocess_data(
-        csv_file)
+    Parameters:
+        y_test (array-like): True labels.
+        y_pred (array-like): Predicted binary labels.
+        decision_scores (array-like, optional): Decision scores or probabilities for ROC-AUC.
+        model_name (str): Name of the model being evaluated.
+    """
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    if decision_scores is not None:
+        roc_auc = roc_auc_score(y_test, decision_scores)
+    else:
+        roc_auc = roc_auc_score(y_test, y_pred)
+    print(f"\n{model_name} Evaluation:")
+    print(f"Precision: {precision:.2f}")
+    print(f"Recall: {recall:.2f}")
+    print(f"F1-Score: {f1:.2f}")
 
-    print(f"Unique values in y_test (ground truth): {set(y_test)}")
 
-    # Perform PCA to reduce dimensionality
-    print("Performing PCA...")
+def Train_Test_ACI_IoT_2023(file):
+    """
+    Train and evaluate unsupervised anomaly detection models on the ACI IoT dataset.
 
-    X_train_pca, X_test_pca = data_pca.perform_pca_and_plot(
-        X_train, y_train, feature_names, X_test=X_test)
+    Parameters:
+        file (str): Path to the CSV file containing the dataset.
+    """
+    # Split into features and target
+    X_train, y_train, X_test, y_test = ACI_IoT_Dataset_2023.getTrainTestDataFromCSV(
+        file)
 
-    print(
-        f"X_train_pca shape: {X_train_pca.shape}, X_test_pca shape: {X_test_pca.shape}")
+    # Train and evaluate Isolation Forest
+    print("\nTraining Isolation Forest...")
+    iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
+        X_train, X_test)
+    evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
+                   model_name="Isolation Forest")
 
-    # Metrics storage
-    model_names = []
-    precisions = []
-    recalls = []
-    f1_scores = []
-    roc_aucs = []
-    train_times = []
-    pred_times = []
+    # Train and evaluate Elliptic Envelope
+    print("\nTraining Elliptic Envelope...")
+    ee_model, ee_y_pred, ee_scores = unsupervised_models.train_elliptic_envelope(
+        X_train, X_test)
+    evaluate_model(y_test, ee_y_pred, decision_scores=ee_scores,
+                   model_name="Elliptic Envelope")
 
-    # Define models
-    models = [
-        # ("One-class SVM", unsupervised_models.train_one_class_svm),
-        ("Isolation Forest", unsupervised_models.train_isolation_forest),
-        ("Elliptic Envelope", unsupervised_models.train_elliptic_envelope),
-        ("LOF", unsupervised_models.train_local_outlier_factor),
-        ("HDBSCAN", unsupervised_models.train_hdbscan)
-    ]
+    # Train and evaluate LOF
+    print("\nTraining LOF...")
+    lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
+        X_train, X_test)
+    evaluate_model(y_test, lof_y_pred,
+                   decision_scores=lof_scores, model_name="LOF")
 
-    for model_name, model_function in models:
-        print(f"\nTraining and evaluating {model_name}...")
 
-        # Train and predict
-        if model_name == "HDBSCAN":
-            model, y_pred, train_time, pred_time = model_function(
-                X_train_pca, X_test_pca, min_samples=5, min_cluster_size=5, outlier_threshold=0.9)
-        else:
-            model, y_pred, train_time, pred_time = model_function(
-                X_train_pca, X_test_pca)
+def Train_Test_CIC_IoT_2023(files):
+    """
+    Perform cross-validation by splitting CIC IoT dataset into train-test folds.
 
-        # Evaluate model
-        precision, recall, f1, roc_auc = model_evaluation.evaluate_anomaly_detection(
-            y_test, y_pred, model_name, train_time, pred_time)
+    Parameters:
+        files (list): List of file paths for the dataset.
+    """
+    for i, test_file in enumerate(files):
+        train_files = [f for j, f in enumerate(files) if j != i]
+        print(f"\n=== Fold {i+1}: Testing on {test_file} ===")
+        train_data = pd.concat([pd.read_csv(f)
+                               for f in train_files], ignore_index=True)
+        test_data = pd.read_csv(test_file)
 
-        # Store metrics
-        model_names.append(model_name)
-        precisions.append(precision)
-        recalls.append(recall)
-        f1_scores.append(f1)
-        roc_aucs.append(roc_auc)
-        train_times.append(train_time)
-        pred_times.append(pred_time)
+        # Split into features and target
+        X_train, y_train, X_test, y_test = CIC_IoT_Dataset_2023.getTrainTestDataFromCSV(
+            test_file)
 
-        # Visualization: Anomaly Detection Results
-        print(f"Visualizing results for {model_name}...")
-        plt.figure(figsize=(8, 6))
-        plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1],
-                    c=y_pred, cmap='coolwarm', alpha=0.5)
-        plt.title(f"Anomaly Detection Results: {model_name}")
-        plt.xlabel("Principal Component 1")
-        plt.ylabel("Principal Component 2")
-        plt.colorbar(label="Prediction (-1: Anomaly, 1: Normal)")
-        plt.show()
+        # Train and evaluate Isolation Forest
+        print("\nTraining Isolation Forest...")
+        iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
+            X_train, X_test)
+        evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
+                       model_name=f"Isolation Forest Fold {i+1}")
 
-    # Summary Table
-    print("\nSummary of Model Performances:")
-    for i, name in enumerate(model_names):
-        print(
-            f"{name} -> Precision: {precisions[i]:.2f}, Recall: {recalls[i]:.2f}, "
-            f"F1-Score: {f1_scores[i]:.2f}, ROC-AUC: {roc_aucs[i]:.2f}, "
-            f"Train Time: {train_times[i]:.2f}s, Prediction Time: {pred_times[i]:.2f}s"
-        )
+        # Train and evaluate Elliptic Envelope
+        print("\nTraining Elliptic Envelope...")
+        ee_model, ee_y_pred, ee_scores = unsupervised_models.train_elliptic_envelope(
+            X_train, X_test)
+        evaluate_model(y_test, ee_y_pred, decision_scores=ee_scores,
+                       model_name=f"Elliptic Envelope Fold {i+1}")
+
+        # Train and evaluate LOF
+        print("\nTraining LOF...")
+        lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
+            X_train, X_test)
+        evaluate_model(y_test, lof_y_pred,
+                       decision_scores=lof_scores, model_name=f"LOF Fold {i+1}")
+
+        # Train and evaluate One-Class SVM
+        print("\nTraining One-Class SVM...")
+        svm_model, svm_y_pred, svm_scores = unsupervised_models.train_one_class_svm(
+            X_train, X_test)
+        evaluate_model(y_test, svm_y_pred,
+                       decision_scores=svm_scores, model_name="One-Class SVM")
 
 
 if __name__ == "__main__":
-    run_test()
+    # Define base directory and data folder
+    base_dir = os.getcwd()
+    data_folder = os.path.join(base_dir, "data")
+
+    # Path to ACI-IoT-2023.csv file
+    # aci_file = os.path.join(data_folder, "ACI-IoT-2023-Payload.csv")
+    # Train_Test_ACI_IoT_2023(aci_file)
+
+    # Paths to Merged1.csv, Merged2.csv, ..., Merged5.csv files
+    cic_files = [os.path.join(
+        data_folder, f"Merged{i:02d}.csv") for i in range(1, 6)]
+    Train_Test_CIC_IoT_2023(cic_files)

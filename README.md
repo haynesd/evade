@@ -11,7 +11,11 @@ This repository contains the implementation of a network anamoly dectection algo
 
 [A sequential deep learning framework for a robust and resilient network intrusion detection system - ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0167404824002311?via%3Dihub)
 
-The ACI-IoT-2023.csv data set is 5.4 gb and is accessible via [Kaggle](https://www.kaggle.com/datasets/emilynack/aci-iot-network-traffic-dataset-2023) or [IEEE Data Port](https://ieee-dataport.org/documents/aci-iot-network-traffic-dataset-2023).
+[Network Intrusion Detection for IoT-Botnet Attacks Using ML Algorithms](https://ieeexplore.ieee.org/document/10334188)
+
+The Archive.zip data set is 5.4 gb and is accessible via [Kaggle](https://www.kaggle.com/datasets/emilynack/aci-iot-network-traffic-dataset-2023) or [IEEE Data Port](https://ieee-dataport.org/documents/aci-iot-network-traffic-dataset-2023).
+
+The CIC-IoT-2024 data is downloadable by Merged01.csv files via [Kaggle](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset).
 
 ## File Structure
 ```
@@ -21,16 +25,20 @@ nad
 ├── requirements.txt
 ├── data
     ├── ACI-IoT-2023-Payload.csv
+    ├── Merged01.csv
+    ├── Merged02.csv
+    ├── Merged03.csv
+    ├── Merged04.csv
+    ├── Merged05.csv
 ├── source 
     ├── __init__.py
-    ├── data_loader.py
-    ├── data_preparation.py
-    ├── data_processing.py
+    ├── ACI_IoT_Dataset_2023.py
+    ├── CIC_IoT_Dataset_2023.py
+    ├── main.py
     ├── supervised_model.py
     ├── unsupervised_model.py
     ├── model_evaluation.py
-    ├── test.py
-    ├── visualization.py
+
 ```
 
 ## Setup Environment
@@ -56,10 +64,12 @@ To setup your python on your workstation:
 ### 5. Make directory data
 ``` mkdir data```
 ### 5. Download [ACI-IoT-2023 data](https://www.kaggle.com/datasets/emilynack/aci-iot-network-traffic-dataset-2023) set 
-### 6. Extract archive.zip download
+### 6. Download [CIC-IoT-2023 data](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset) set
+### 7. Extract archive.zip download
 #### Extract ACI-IoT-2023-Payload.csv from archive.zip and place in data directory
-### 7. Run Test
+#### Download Merged01.csv, Merged02.csv Merged03.csv, Merged04.csv, and Merged05.csv from website and place in data directory
+### 8. Run Test
 #### changed directory to source: ```cd to nad/source```
-#### run test by typing: ```python test.py```
+#### run test by typing: ```python main.py```
 
 
