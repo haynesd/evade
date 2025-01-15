@@ -45,15 +45,15 @@ def train_elliptic_envelope(X_train, X_test):
         decision_scores: Decision function scores for the test set.
     """
     model = EllipticEnvelope(
-        contamination=0.1, support_fraction=0.9, random_state=42)
+        contamination=0.15, support_fraction=0.8, random_state=42)
     model.fit(X_train)
 
     # Generate decision scores
     decision_scores = model.decision_function(X_test)
 
-    # Threshold-based predictions (customizable threshold)
-    threshold = np.percentile(decision_scores, 5)  # Top 5% anomalies
-    y_pred = (decision_scores < threshold).astype(int)  # Invert for anomalies
+    # Use a relaxed threshold
+    threshold = np.percentile(decision_scores, 15)  # Top 15% anomalies
+    y_pred = (decision_scores < threshold).astype(int)
 
     return model, y_pred, decision_scores
 
