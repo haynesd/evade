@@ -11,27 +11,36 @@ import unsupervised_models
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
-def evaluate_model(y_test, y_pred, decision_scores=None, model_name="Model"):
+def evaluate_model(y_test, y_pred, decision_scores, model_name="Model"):
     """
     Evaluate the model's performance using precision, recall, F1-score, and ROC-AUC.
 
     Parameters:
         y_test (array-like): True labels.
         y_pred (array-like): Predicted binary labels.
-        decision_scores (array-like, optional): Decision scores or probabilities for ROC-AUC.
+        decision_scores (array-like): Decision scores or probabilities for ROC-AUC.
         model_name (str): Name of the model being evaluated.
     """
+    from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
+
+    # Compute classification metrics
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
-    if decision_scores is not None:
-        roc_auc = roc_auc_score(y_test, decision_scores)
-    else:
-        roc_auc = roc_auc_score(y_test, y_pred)
+
+    # Compute ROC-AUC using decision scores
+    try:
+        # Invert if anomalies have lower scores
+        roc_auc = roc_auc_score(y_test, -decision_scores)
+    except ValueError:
+        # Handle cases where ROC-AUC cannot be computed (e.g., single class)
+        roc_auc = 0.0
+
     print(f"\n{model_name} Evaluation:")
     print(f"Precision: {precision:.2f}")
     print(f"Recall: {recall:.2f}")
     print(f"F1-Score: {f1:.2f}")
+    print(f"ROC-AUC: {roc_auc:.2f}")
 
 
 def Train_Test_ACI_IoT_2023(file):
@@ -83,35 +92,42 @@ def Train_Test_CIC_IoT_2023(files):
 
         # Split into features and target
         X_train, y_train, X_test, y_test = CIC_IoT_Dataset_2023.getTrainTestDataFromCSV(
-            test_file)
-
-        # Train and evaluate Isolation Forest
-        print("\nTraining Isolation Forest...")
-        iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
-            X_train, X_test)
-        evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
-                       model_name=f"Isolation Forest Fold {i+1}")
+            test_file
+        )
 
         # Train and evaluate Elliptic Envelope
         print("\nTraining Elliptic Envelope...")
         ee_model, ee_y_pred, ee_scores = unsupervised_models.train_elliptic_envelope(
-            X_train, X_test)
+            X_train, X_test
+        )
+
         evaluate_model(y_test, ee_y_pred, decision_scores=ee_scores,
                        model_name=f"Elliptic Envelope Fold {i+1}")
 
-        # Train and evaluate LOF
-        print("\nTraining LOF...")
-        lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
-            X_train, X_test)
-        evaluate_model(y_test, lof_y_pred,
-                       decision_scores=lof_scores, model_name=f"LOF Fold {i+1}")
+        # Visualize Elliptic Envelope decision boundaries
+        unsupervised_models.visualize_elliptic_envelope(
+            X_train, X_test, ee_model, ee_scores)
 
-        # Train and evaluate One-Class SVM
-        print("\nTraining One-Class SVM...")
-        svm_model, svm_y_pred, svm_scores = unsupervised_models.train_one_class_svm(
-            X_train, X_test)
-        evaluate_model(y_test, svm_y_pred,
-                       decision_scores=svm_scores, model_name="One-Class SVM")
+        # Train and evaluate Isolation Forest
+        # print("\nTraining Isolation Forest...")
+        # iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
+        #     X_train, X_test)
+        # evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
+        #                model_name=f"Isolation Forest Fold {i+1}")
+
+        # Train and evaluate LOF
+        # print("\nTraining LOF...")
+        # lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
+        #     X_train, X_test)
+        # evaluate_model(y_test, lof_y_pred,
+        #                decision_scores=lof_scores, model_name=f"LOF Fold {i+1}")
+
+        # # Train and evaluate One-Class SVM
+        # print("\nTraining One-Class SVM...")
+        # svm_model, svm_y_pred, svm_scores = unsupervised_models.train_one_class_svm(
+        #     X_train, X_test)
+        # evaluate_model(y_test, svm_y_pred,
+        #                decision_scores=svm_scores, model_name="One-Class SVM")
 
 
 if __name__ == "__main__":

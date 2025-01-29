@@ -1,3 +1,4 @@
+from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -18,6 +19,12 @@ import numpy as np
 #
 # https://www.unb.ca/cic/datasets/iotdataset-2023.html
 
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.utils import shuffle
+
 
 def getTrainTestDataFromCSV(csv_file):
     data = pd.read_csv(csv_file)
@@ -32,42 +39,47 @@ def getTrainTestDataFromCSV(csv_file):
         "Min", "Max", "AVG", "Std", "Tot size", "IAT", "Number", "Variance"
     ]
 
-    # Remove duplicates
+    # Data cleaning
     data = data.drop_duplicates()
-
-    # Filter features
     X = data[selected_features].copy()
     X.replace([np.inf, -np.inf], np.nan, inplace=True)
-    X.dropna(inplace=True)
-
-    # Align labels
-    data = data.loc[X.index]
+    X.fillna(X.mean(), inplace=True)
     data["Label"] = data["Label"].apply(lambda x: 0 if x == "BENIGN" else 1)
-
-    # Update X and y
-    X = data[selected_features]
     y = data["Label"]
 
-    # Reset indices
-    X = X.reset_index(drop=True)
-    y = y.reset_index(drop=True)
+    # Feature engineering
+    # Total Flags: Sum of all TCP flags (e.g., SYN, RST, ACK) to capture overall connection activity. High flag activity often indicates anomalies like SYN floods in DDoS attacks.
+    # Protocol Aggregation: Combined metrics of protocol-based features (e.g., HTTP, DNS, IRC) to highlight patterns, as protocols like IRC and DNS are commonly exploited in botnet communications.
+    # Packet Rate Normalization: Ratio of packet rate to total TCP flags, identifying disproportionate activity relative to flag usage, a common sign of anomalies.
+    # Inter-Arrival Time (IAT) Ratio: Captures temporal patterns in traffic, with anomalies often showing irregular IAT values.
+    # Rate-IAT Product: Product of packet rate and IAT, highlighting disrupted relationships between traffic volume and timing in anomalies.
+    # Flag Ratios: Ratios of individual TCP flags to the total flag count (e.g., SYN or RST), emphasizing behaviors like SYN floods or RST storms indicative of anomalies.
+    # Weighted Protocol Activity: Combination of protocol type and activity level, revealing interactions that often indicate misuse or malicious behavior.
+    X['Total_Flags'] = X[['fin_flag_number', 'syn_flag_number', 'rst_flag_number',
+                          'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
+                          'cwr_flag_number']].sum(axis=1)
+    X['Protocol_Activity'] = X[[
+        'HTTP', 'HTTPS', 'DNS', 'IRC', 'SSH']].sum(axis=1)
+    X['Rate_Per_Flag'] = X['Rate'] / (X['Total_Flags'] + 1)
+    X['IAT_Ratio'] = X['IAT'] / (X['Rate'] + 1)
+    X['Rate_IAT'] = X['Rate'] * X['IAT']
+    X['TotSize_Rate'] = X['Tot size'] / (X['Rate'] + 1)
+    X['SYN_Ratio'] = X['syn_flag_number'] / (X['Total_Flags'] + 1)
+    X['RST_Ratio'] = X['rst_flag_number'] / (X['Total_Flags'] + 1)
+    X['Weighted_Protocol'] = X['Protocol Type'] * X['Protocol_Activity']
 
-    # Split benign and anomaly data
+    # Train-test split
     X_benign = X[y == 0]
     X_anomalies = X[y == 1]
-
     train_benign_size = int(len(X_benign) * 0.9)
     X_train = X_benign.sample(n=train_benign_size, random_state=42)
     y_train = pd.Series(0, index=X_train.index)
-
     test_benign_size = int(len(X_benign) * 0.1)
-    test_anomalies_size = min(len(X_anomalies), int(test_benign_size * 0.1))
+    test_anomalies_size = int(test_benign_size * 0.2)
     X_test_benign = X_benign.drop(X_train.index).sample(
         n=test_benign_size, random_state=42)
     X_test_anomalies = X_anomalies.sample(
         n=test_anomalies_size, random_state=42)
-
-    # Combine and shuffle test data
     X_test = pd.concat([X_test_benign, X_test_anomalies], axis=0)
     y_test = pd.concat([pd.Series(0, index=X_test_benign.index),
                         pd.Series(1, index=X_test_anomalies.index)], axis=0)
@@ -78,14 +90,19 @@ def getTrainTestDataFromCSV(csv_file):
     print(f"Number of benign packets in testing: {len(X_test_benign)}")
     print(f"Number of anomaly packets in testing: {len(X_test_anomalies)}")
 
-    # Apply PCA
-    pca = PCA(n_components=min(len(X_train.columns), 10))
-    X_train_pca = pd.DataFrame(pca.fit_transform(X_train))
-    X_test_pca = pd.DataFrame(pca.transform(X_test))
-
     # Scale features
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train_pca)
-    X_test_scaled = scaler.transform(X_test_pca)
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
 
-    return X_train_scaled, y_train, X_test_scaled, y_test
+    # PCA for dimensionality reduction
+    pca = PCA()
+    pca.fit(X_train_scaled)
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    n_components = np.argmax(cumulative_variance >= 0.95) + 1
+    print(f"Selected PCA components: {n_components}")
+    pca = PCA(n_components=n_components)
+    X_train_pca = pd.DataFrame(pca.fit_transform(X_train_scaled))
+    X_test_pca = pd.DataFrame(pca.transform(X_test_scaled))
+
+    return X_train_pca, y_train, X_test_pca, y_test

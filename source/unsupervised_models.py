@@ -1,4 +1,6 @@
+from sklearn.decomposition import PCA
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -44,6 +46,8 @@ def train_elliptic_envelope(X_train, X_test):
         y_pred: Binary predictions for the test set.
         decision_scores: Decision function scores for the test set.
     """
+    # contamination=0.15 - Indicates that 15% of the data is considered anomalies (outliers) for fitting the Gaussian distribution.
+    # support_fraction=0.80 - Indicates that 80% of the data is considered inliers (normal points) for fitting the Gaussian distribution.
     model = EllipticEnvelope(
         contamination=0.15, support_fraction=0.8, random_state=42)
     model.fit(X_train)
@@ -56,6 +60,50 @@ def train_elliptic_envelope(X_train, X_test):
     y_pred = (decision_scores < threshold).astype(int)
 
     return model, y_pred, decision_scores
+
+
+def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_components=2):
+    """
+    Visualize the Elliptic Envelope with the decision ellipse after dimensionality reduction.
+
+    Parameters:
+        X_train (array-like): Training features.
+        X_test (array-like): Test features.
+        model: Trained Elliptic Envelope model.
+        decision_scores (array-like): Decision function scores for the test set.
+        n_components (int): Number of components for PCA.
+    """
+    # Reduce to 2 dimensions for visualization
+    pca = PCA(n_components=n_components)
+    X_train_2d = pca.fit_transform(X_train)
+    X_test_2d = pca.transform(X_test)
+
+    # Train a new Elliptic Envelope on reduced data for visualization
+    vis_model = EllipticEnvelope(
+        contamination=0.15, support_fraction=0.8, random_state=42)
+    vis_model.fit(X_train_2d)
+
+    # Create grid for visualization
+    xx, yy = np.meshgrid(np.linspace(X_train_2d[:, 0].min() - 1, X_train_2d[:, 0].max() + 1, 500),
+                         np.linspace(X_train_2d[:, 1].min() - 1, X_train_2d[:, 1].max() + 1, 500))
+    Z = vis_model.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # Plot the results
+    plt.figure(figsize=(10, 6))
+    plt.scatter(X_test_2d[:, 0], X_test_2d[:, 1], c=decision_scores,
+                cmap='coolwarm', s=50, edgecolor='k', label='Test Data')
+    plt.colorbar(label='Decision Score')
+    plt.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                color='green', s=20, label='Training Data', alpha=0.6)
+    plt.contour(xx, yy, Z, levels=[0], linewidths=2,
+                colors='red')  # Decision ellipse
+
+    plt.title("Elliptic Envelope - Outlier Detection with PCA")
+    plt.xlabel("PCA Component 1")
+    plt.ylabel("PCA Component 2")
+    plt.legend()
+    plt.show()
 
 
 def train_lof(X_train, X_test):
