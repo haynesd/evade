@@ -109,30 +109,31 @@ def Train_Test_CIC_IoT_2023(files):
             X_train, X_test, ee_model, ee_scores)
 
         # Train and evaluate Isolation Forest
-        # print("\nTraining Isolation Forest...")
-        # iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
-        #     X_train, X_test)
-        # evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
-        #                model_name=f"Isolation Forest Fold {i+1}")
+        print("\nTraining Isolation Forest...")
+        iso_model, iso_y_pred, iso_scores = unsupervised_models.train_isolation_forest(
+            X_train, X_test)
+        evaluate_model(y_test, iso_y_pred, decision_scores=iso_scores,
+                       model_name=f"Isolation Forest Fold {i+1}")
 
         # Train and evaluate LOF
-        # print("\nTraining LOF...")
-        # lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
-        #     X_train, X_test)
-        # evaluate_model(y_test, lof_y_pred,
-        #                decision_scores=lof_scores, model_name=f"LOF Fold {i+1}")
+        print("\nTraining LOF...")
+        lof_model, lof_y_pred, lof_scores = unsupervised_models.train_lof(
+            X_train, X_test)
+        evaluate_model(y_test, lof_y_pred,
+                       decision_scores=lof_scores, model_name=f"LOF Fold {i+1}")
 
-        # # Train and evaluate One-Class SVM
-        # print("\nTraining One-Class SVM...")
-        # svm_model, svm_y_pred, svm_scores = unsupervised_models.train_one_class_svm(
-        #     X_train, X_test)
-        # evaluate_model(y_test, svm_y_pred,
-        #                decision_scores=svm_scores, model_name="One-Class SVM")
+        # Train and evaluate One-Class SVM
+        print("\nTraining One-Class SVM...")
+        svm_model, svm_y_pred, svm_scores = unsupervised_models.train_one_class_svm(
+            X_train, X_test)
+        evaluate_model(y_test, svm_y_pred,
+                       decision_scores=svm_scores, model_name="One-Class SVM")
 
 
 if __name__ == "__main__":
     # Define base directory and data folder
-    base_dir = os.getcwd()
+
+    base_dir = os.path.dirname(os.getcwd())  # Move up one level from "source"
     data_folder = os.path.join(base_dir, "data")
 
     # Path to ACI-IoT-2023.csv file

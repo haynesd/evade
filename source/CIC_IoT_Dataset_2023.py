@@ -19,17 +19,17 @@ import numpy as np
 #
 # https://www.unb.ca/cic/datasets/iotdataset-2023.html
 
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.utils import shuffle
 
-
+# engineered = only engineered features
+# selected = only selected features
+# both = both engineered and selected features
 def getTrainTestDataFromCSV(csv_file):
     data = pd.read_csv(csv_file)
 
-    # Feature selection
+    # Ensure label column is properly formatted
+    data["Label"] = data["Label"].apply(lambda x: 0 if x == "BENIGN" else 1)
+
+    # Selected Features
     selected_features = [
         "Header_Length", "Protocol Type", "Time_To_Live", "Rate", "fin_flag_number",
         "syn_flag_number", "rst_flag_number", "psh_flag_number", "ack_flag_number",
@@ -39,43 +39,27 @@ def getTrainTestDataFromCSV(csv_file):
         "Min", "Max", "AVG", "Std", "Tot size", "IAT", "Number", "Variance"
     ]
 
-    # Data cleaning
-    data = data.drop_duplicates()
     X = data[selected_features].copy()
-    X.replace([np.inf, -np.inf], np.nan, inplace=True)
-    X.fillna(X.mean(), inplace=True)
-    data["Label"] = data["Label"].apply(lambda x: 0 if x == "BENIGN" else 1)
-    y = data["Label"]
 
-    # Feature engineering
-    # Total Flags: Sum of all TCP flags (e.g., SYN, RST, ACK) to capture overall connection activity. High flag activity often indicates anomalies like SYN floods in DDoS attacks.
-    # Protocol Aggregation: Combined metrics of protocol-based features (e.g., HTTP, DNS, IRC) to highlight patterns, as protocols like IRC and DNS are commonly exploited in botnet communications.
-    # Packet Rate Normalization: Ratio of packet rate to total TCP flags, identifying disproportionate activity relative to flag usage, a common sign of anomalies.
-    # Inter-Arrival Time (IAT) Ratio: Captures temporal patterns in traffic, with anomalies often showing irregular IAT values.
-    # Rate-IAT Product: Product of packet rate and IAT, highlighting disrupted relationships between traffic volume and timing in anomalies.
-    # Flag Ratios: Ratios of individual TCP flags to the total flag count (e.g., SYN or RST), emphasizing behaviors like SYN floods or RST storms indicative of anomalies.
-    # Weighted Protocol Activity: Combination of protocol type and activity level, revealing interactions that often indicate misuse or malicious behavior.
-    X['Total_Flags'] = X[['fin_flag_number', 'syn_flag_number', 'rst_flag_number',
-                          'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
-                          'cwr_flag_number']].sum(axis=1)
-    X['Protocol_Activity'] = X[[
-        'HTTP', 'HTTPS', 'DNS', 'IRC', 'SSH']].sum(axis=1)
-    X['Rate_Per_Flag'] = X['Rate'] / (X['Total_Flags'] + 1)
-    X['IAT_Ratio'] = X['IAT'] / (X['Rate'] + 1)
-    X['Rate_IAT'] = X['Rate'] * X['IAT']
-    X['TotSize_Rate'] = X['Tot size'] / (X['Rate'] + 1)
-    X['SYN_Ratio'] = X['syn_flag_number'] / (X['Total_Flags'] + 1)
-    X['RST_Ratio'] = X['rst_flag_number'] / (X['Total_Flags'] + 1)
-    X['Weighted_Protocol'] = X['Protocol Type'] * X['Protocol_Activity']
+    # Convert all features to numeric
+    X = X.apply(pd.to_numeric, errors='coerce')
+
+    # Handle missing values and infinite values
+    X.replace([np.inf, -np.inf], np.nan, inplace=True)
+    X.fillna(X.median(), inplace=True)
+    X.clip(lower=-1e6, upper=1e6, inplace=True)
+    assert not X.isnull().values.any(), "NaN values found after preprocessing"
+
+    y = data["Label"]
 
     # Train-test split
     X_benign = X[y == 0]
     X_anomalies = X[y == 1]
-    train_benign_size = int(len(X_benign) * 0.9)
+    train_benign_size = int(len(X_benign) * 0.70)
     X_train = X_benign.sample(n=train_benign_size, random_state=42)
     y_train = pd.Series(0, index=X_train.index)
-    test_benign_size = int(len(X_benign) * 0.1)
-    test_anomalies_size = int(test_benign_size * 0.2)
+    test_benign_size = int(len(X_benign) * 0.20)
+    test_anomalies_size = int(test_benign_size * 0.18)
     X_test_benign = X_benign.drop(X_train.index).sample(
         n=test_benign_size, random_state=42)
     X_test_anomalies = X_anomalies.sample(
@@ -105,4 +89,5 @@ def getTrainTestDataFromCSV(csv_file):
     X_train_pca = pd.DataFrame(pca.fit_transform(X_train_scaled))
     X_test_pca = pd.DataFrame(pca.transform(X_test_scaled))
 
+    # w/o PCA: return X_train_scaled, y_train, X_test_scaled, y_test
     return X_train_pca, y_train, X_test_pca, y_test
