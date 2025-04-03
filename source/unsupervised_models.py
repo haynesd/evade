@@ -1,3 +1,4 @@
+import time
 from sklearn.decomposition import PCA
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,15 +21,23 @@ def train_isolation_forest(X_train, X_test):
         y_pred: Binary predictions for the test set.
         decision_scores: Decision function scores for the test set.
     """
-    model = IsolationForest(contamination=0.1, random_state=42)
+    model = IsolationForest(contamination=0.15, random_state=42)
+        
+    train_start = time.time()
     model.fit(X_train)
+    train_end = time.time()
+    print(f"Training took {train_end - train_start:.4f}s")
 
     # Generate decision scores
     decision_scores = model.decision_function(X_test)
 
     # Threshold-based predictions (customizable threshold)
-    threshold = np.percentile(decision_scores, 5)  # Top 5% anomalies
-    y_pred = (decision_scores < threshold).astype(int)  # Invert for anomalies
+    pred_start = time.time()
+    y_pred = model.predict(X_test)
+    pred_end = time.time()
+    print(f"Prediction took {pred_end - pred_start:.4f}s")  
+    
+    y_pred = np.where(y_pred == -1, 1, 0)  # Convert -1 to 1 (anomaly), 1 to 0 (normal)
 
     return model, y_pred, decision_scores
 
@@ -48,18 +57,27 @@ def train_elliptic_envelope(X_train, X_test):
     """
     # contamination=0.15 - Indicates that 15% of the data is considered anomalies (outliers) for fitting the Gaussian distribution.
     # support_fraction=0.80 - Indicates that 80% of the data is considered inliers (normal points) for fitting the Gaussian distribution.
-    model = EllipticEnvelope(
+    ee = EllipticEnvelope(
         contamination=0.15, support_fraction=0.8, random_state=42)
-    model.fit(X_train)
+    
+    train_start = time.time()
+    ee.fit(X_train)
+    train_end = time.time()
+    print(f"Training took {train_end - train_start:.4f}s")
 
     # Generate decision scores
-    decision_scores = model.decision_function(X_test)
+    decision_scores = ee.decision_function(X_test)
 
     # Use a relaxed threshold
     threshold = np.percentile(decision_scores, 15)  # Top 15% anomalies
-    y_pred = (decision_scores < threshold).astype(int)
 
-    return model, y_pred, decision_scores
+    pred_start = time.time()
+    y_pred = ee.predict(X_test)
+    y_pred = (decision_scores < threshold).astype(int)
+    pred_end = time.time()
+    print(f"Prediction took {pred_end - pred_start:.4f}s") 
+
+    return ee, y_pred, decision_scores
 
 
 def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_components=2):
@@ -120,15 +138,23 @@ def train_lof(X_train, X_test):
         decision_scores: Decision function scores for the test set.
     """
     # Initialize LOF with novelty detection enabled
-    lof = LocalOutlierFactor(n_neighbors=20, contamination=0.1, novelty=True)
+    lof = LocalOutlierFactor(n_neighbors=50, contamination=0.15, novelty=True)
+    train_start = time.time()
     lof.fit(X_train)
+    train_end = time.time()
+    print(f"Training took {train_end - train_start:.4f}s")
 
     # Generate decision scores
-    decision_scores = -lof.decision_function(X_test)  # Negate for consistency
+    decision_scores = lof.decision_function(X_test)
 
-    # Threshold-based predictions (customizable threshold)
-    threshold = np.percentile(decision_scores, 95)  # Top 5% anomalies
-    y_pred = (decision_scores > threshold).astype(int)
+    # Threshold: bottom 15% scores = outliers
+    threshold = np.percentile(decision_scores, 15)  
+    
+    pred_start = time.time()
+    y_pred = lof.predict(X_test)
+    y_pred = (decision_scores < threshold).astype(int)
+    pred_end = time.time()
+    print(f"Prediction took {pred_end - pred_start:.4f}s") 
 
     return lof, y_pred, decision_scores
 
@@ -142,20 +168,26 @@ def train_one_class_svm(X_train, X_test):
         X_test (array-like): Test features.
 
     Returns:
-        model: Trained One-Class SVM model.
+        svm: Trained One-Class SVM model.
         y_pred: Binary predictions for the test set.
         decision_scores: Decision function scores for the test set.
     """
-    model = OneClassSVM(kernel="rbf", gamma=0.1,
-                        nu=0.05)  # Adjust `gamma` and `nu` as needed
-    model.fit(X_train)
+    svm = OneClassSVM(kernel="rbf", gamma='scale', nu=0.01)  # Adjust `gamma` and `nu` as needed
+    train_start = time.time()
+    svm.fit(X_train)
+    train_end = time.time()
+    print(f"Training took {train_end - train_start:.4f}s")
 
     # Generate decision scores (distance to the decision boundary)
-    decision_scores = model.decision_function(X_test)
+    decision_scores = svm.decision_function(X_test)
 
     # Predict anomalies (-1 for anomaly, 1 for normal)
-    y_pred = model.predict(X_test)
-    # Convert to binary format: 1 for anomaly, 0 for normal
-    y_pred = [1 if x == -1 else 0 for x in y_pred]
+    pred_start = time.time()
+    y_pred = svm.predict(X_test)
+    pred_end = time.time()
+    print(f"Prediction took {pred_end - pred_start:.4f}s") 
 
-    return model, y_pred, decision_scores
+    # Convert to binary format: 1 for anomaly, 0 for normal
+    y_pred = np.where(y_pred == -1, 1, 0)
+
+    return svm, y_pred, decision_scores

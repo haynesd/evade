@@ -79,15 +79,5 @@ def getTrainTestDataFromCSV(csv_file):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # PCA for dimensionality reduction
-    pca = PCA()
-    pca.fit(X_train_scaled)
-    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-    n_components = np.argmax(cumulative_variance >= 0.95) + 1
-    print(f"Selected PCA components: {n_components}")
-    pca = PCA(n_components=n_components)
-    X_train_pca = pd.DataFrame(pca.fit_transform(X_train_scaled))
-    X_test_pca = pd.DataFrame(pca.transform(X_test_scaled))
-
     # w/o PCA: return X_train_scaled, y_train, X_test_scaled, y_test
-    return X_train_pca, y_train, X_test_pca, y_test
+    return X_train_scaled, y_train, X_test_scaled, y_test
