@@ -35,10 +35,10 @@ nad
     ├── ACI_IoT_Dataset_2023.py
     ├── CIC_IoT_Dataset_2023.py
     ├── main.py
-    ├── supervised_model.py
-    ├── unsupervised_model.py
-    ├── model_evaluation.py
-
+    ├── model.py
+    ├── util.py
+├── trained_models
+    ├── trained_models_bundle.zip
 ```
 
 ## Setup Environment
@@ -68,7 +68,10 @@ To setup your python on your workstation:
 #### Extract ACI-IoT-2023-Payload.csv from archive.zip and place in data directory
 #### Download Merged01.csv, Merged02.csv Merged03.csv, Merged04.csv, and Merged05.csv from website and place in data directory
 ### 8. Run Test
-#### changed directory to source: ```cd to nad/source```
-#### run test by typing: ```python main.py```
+#### changed directory to source: ```cd to nad```
+#### run training by typing: ```python source/main.py --mode train --data_dir ./data --model_dir ./trained_model```
+### 8. Run Training
+#### You can move code to test on other devices such as a raspberry pi:  ```scp -r trained_models_bundle.zip david@192.168.1.249:/home/david/source/repos/nad/trained_models/```
+#### run test by typing: ```python source/main.py --mode test --data_dir ./data --model_dir ./trained_model```
 
 
