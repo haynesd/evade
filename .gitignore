@@ -15,3 +15,7 @@ venv/
 
 # Ignore data payload files
 *.csv
+
+# Ignore trained model output
+trained_models/
+trained_models_bundle.zip
