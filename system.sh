@@ -10,11 +10,14 @@ IS_WSL=false
 IS_GIT_BASH=false
 IS_LINUX=false
 
-case "$KERNEL_NAME" in
-  *Microsoft*) IS_WSL=true ;;
-  MINGW64_NT*|MSYS_NT*) IS_GIT_BASH=true ;;
-  Linux) IS_LINUX=true ;;
-esac
+# Use /proc/version for WSL check
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    IS_WSL=true
+elif [[ "$KERNEL_NAME" == MINGW64_NT* || "$KERNEL_NAME" == MSYS_NT* ]]; then
+    IS_GIT_BASH=true
+elif [[ "$KERNEL_NAME" == "Linux" ]]; then
+    IS_LINUX=true
+fi
 
 # Environment info
 echo "-- Environment Detection --"
@@ -33,66 +36,67 @@ echo
 echo "-- Operating System --"
 uname -a
 if [[ -f /etc/os-release ]]; then
-    grep -E '^NAME=|^VERSION=' /etc/os-release | cut -d= -f2 | tr -d '"'
+    grep -E '^PRETTY_NAME=|^VERSION=' /etc/os-release | cut -d= -f2 | tr -d '"'
 elif $IS_GIT_BASH; then
     systeminfo | grep -E "OS Name|OS Version|BIOS Version"
 fi
 
-# Hardware & Firmware
+# Firmware & Hardware Info
 echo
 echo "-- Firmware and Hardware --"
 
 if $IS_GIT_BASH; then
     echo "Using WMIC (Windows) tools..."
 
-    echo
-    echo "CPU:"
+    echo -e "\nCPU:"
     wmic cpu get Name | grep -v "^$" | tail -n +2
 
-    echo
-    echo "Memory:"
+    echo -e "\nMemory:"
     wmic memorychip get Capacity,Speed | grep -v "^$" | tail -n +2
 
-    echo
-    echo "BIOS:"
+    echo -e "\nBIOS:"
     wmic bios get Manufacturer,SMBIOSBIOSVersion,ReleaseDate | grep -v "^$" | tail -n +2
 
-    echo
-    echo "Motherboard:"
+    echo -e "\nMotherboard:"
     wmic baseboard get Manufacturer,Product | grep -v "^$" | tail -n +2
 
-    echo
-    echo "Disks:"
+    echo -e "\nDisks:"
     wmic diskdrive get Model,Size | grep -v "^$" | tail -n +2
 
-    echo
-    echo "GPU:"
+    echo -e "\nGPU:"
     wmic path win32_VideoController get Name | grep -v "^$" | tail -n +2
 
-elif $IS_WSL || $IS_LINUX; then
-    echo
-    echo "CPU:"
-    lscpu | grep "Model name" || echo "lscpu not found"
+else
+    echo -e "\nCPU:"
+    if command -v lscpu &>/dev/null; then
+        lscpu | grep "Model name" || grep "Architecture" || echo "CPU info not found"
+    else
+        echo "lscpu not found"
+    fi
 
-    echo
-    echo "Memory:"
+    echo -e "\nMemory:"
     free -h || echo "free not found"
 
-    echo
-    echo "BIOS:"
-    sudo dmidecode -t bios | grep -E "Vendor|Version|Release Date" || echo "dmidecode not found"
+    echo -e "\nBIOS:"
+    if command -v dmidecode &>/dev/null; then
+        sudo dmidecode -t bios | grep -E "Vendor|Version|Release Date"
+    else
+        echo "dmidecode not available (likely restricted in WSL)"
+    fi
 
-    echo
-    echo "Motherboard:"
-    sudo dmidecode -t baseboard | grep -E "Manufacturer|Product Name" || echo "dmidecode not found"
+    echo -e "\nMotherboard:"
+    if command -v dmidecode &>/dev/null; then
+        sudo dmidecode -t baseboard | grep -E "Manufacturer|Product Name"
+    else
+        echo "dmidecode not available (likely restricted in WSL)"
+    fi
 
-    echo
-    echo "Disks:"
-    lsblk || echo "lsblk not found"
-
-    echo
-    echo "GPU:"
-    lspci | grep -i vga || echo "lspci not found"
+    echo -e "\nGPU:"
+    if command -v lspci &>/dev/null; then
+        lspci | grep -i vga || echo "No VGA-compatible GPU found"
+    else
+        echo "lspci not available (not supported in many WSL/ARM environments)"
+    fi
 fi
 
 echo
