@@ -12,8 +12,9 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.exceptions import UndefinedMetricWarning
 
-import CIC_IoT_Dataset_2023
 import ACI_IoT_Dataset_2023
+
+from data_loader import getDataFromCSV
 from utils import applyPCA, evaluate_model
 from models import train_isolation_forest, train_elliptic_envelope, train_lof, train_one_class_svm
 
@@ -48,7 +49,7 @@ def train_models(data_dir, output_dir):
         print(f"\n=== Fold {i+1}: Testing on {test_file} ===")
 
         # Load scaled data (PCA is based on training fold)
-        X_train_scaled, y_train, X_test_scaled, y_test = CIC_IoT_Dataset_2023.getTrainTestDataFromCSV(
+        X_train_scaled, y_train, X_test_scaled, y_test = getDataFromCSV(
             test_file)
 
         # Apply PCA
@@ -117,7 +118,7 @@ def test_models(data_dir, model_dir):
 
         # Load test dataset
         test_file = os.path.join(data_dir, f"Merged{fold:02d}.csv")
-        X_train_scaled, y_train, X_test_scaled, y_test = CIC_IoT_Dataset_2023.getTrainTestDataFromCSV(
+        X_train_scaled, y_train, X_test_scaled, y_test = data_loader.getTrainTestDataFromCSV(
             test_file)
 
         # Load PCA model and transform test data

@@ -23,7 +23,7 @@ import numpy as np
 # engineered = only engineered features
 # selected = only selected features
 # both = both engineered and selected features
-def getTrainTestDataFromCSV(csv_file):
+def getDataFromCSV(csv_file):
     data = pd.read_csv(csv_file)
 
     # Ensure label column is properly formatted
