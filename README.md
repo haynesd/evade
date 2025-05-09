@@ -7,7 +7,7 @@ This repository contains the implementation of EVADE, A Lightweight, Unsupervise
 ## Reference
 [Paper TBP]
 
-The CIC-IoT-2024 data is downloadable as Merged01.csv files via [Kaggle](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset).
+The CIC-IoT-2023 data is downloadable as Merged01.csv files via [Kaggle](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset).
 
 ## File Structure
 ```
