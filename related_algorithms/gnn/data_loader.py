@@ -4,7 +4,24 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
+# Canadian Institute for Cybersecurity - CIC IoT Dataset 2023
+#
+# A real-time dataset and benchmark for large-scale attacks in IoT environment
+# The main goal of this research is to propose a novel and extensive IoT attack
+# dataset to foster the development of security analytics applications in real
+# IoT operations. To accomplish this, 33 attacks are executed in an IoT topology
+# composed of 105 devices.
+#
+# These attacks are classified into seven categories, namely DDoS, DoS, Recon,
+# Web-based, Brute Force, Spoofing, and Mirai. Finally, all attacks are executed
+# by malicious IoT devices targeting other IoT device
+#
+# https://www.unb.ca/cic/datasets/iotdataset-2023.html
 
+
+# engineered = only engineered features
+# selected = only selected features
+# both = both engineered and selected features
 def getDataFromCSV(csv_file):
     data = pd.read_csv(csv_file)
     data["Label"] = data["Label"].apply(lambda x: 0 if x == "BENIGN" else 1)
