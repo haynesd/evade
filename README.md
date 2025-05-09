@@ -60,7 +60,7 @@ To set up your Python on your workstation:
 #### changed directory to source: ```cd to evade```
 #### run training by typing: ```python source/main.py --mode train --data_dir ./data --model_dir ./trained_model```
 ### 9. Run Training
-#### You can move code to test on other devices such as a Raspberry Pi:  ```scp -r trained_models_bundle.zip david@192.168.1.249:/home/david/source/repos/nad/trained_models/```
+#### You can move code to test on other devices such as a Raspberry Pi:  ```scp -r trained_models_bundle.zip david@192.168.1.249:/home/david/source/repos/evade/trained_models/```
 #### run test by typing: ```python source/main.py --mode test --data_dir ./data --model_dir ./trained_model```
 
 
