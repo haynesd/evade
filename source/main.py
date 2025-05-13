@@ -14,7 +14,6 @@ from sklearn.exceptions import UndefinedMetricWarning
 
 
 from data_loader import getDataFromCSV
-from source import data_loader
 from utils import applyPCA, evaluate_model
 from models import train_isolation_forest, train_elliptic_envelope, train_lof, train_one_class_svm
 
