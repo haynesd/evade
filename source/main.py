@@ -12,10 +12,11 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.exceptions import UndefinedMetricWarning
 
-
+import data_loader
 from data_loader import getDataFromCSV
 from utils import applyPCA, evaluate_model
 from models import train_isolation_forest, train_elliptic_envelope, train_lof, train_one_class_svm
+from utils import visualize_elliptic_envelope
 
 # Ensure current directory is in path
 sys.path.append(os.path.dirname(__file__))
@@ -117,7 +118,7 @@ def test_models(data_dir, model_dir):
 
         # Load test dataset
         test_file = os.path.join(data_dir, f"Merged{fold:02d}.csv")
-        X_train_scaled, y_train, X_test_scaled, y_test = data_loader.getTrainTestDataFromCSV(
+        X_train_scaled, y_train, X_test_scaled, y_test = data_loader.getDataFromCSV(
             test_file)
 
         # Load PCA model and transform test data
@@ -163,6 +164,17 @@ def test_models(data_dir, model_dir):
 
             evaluate_model(y_test, preds, scores, model_name=name)
             print()
+
+            # Visualize ONLY for Elliptic Envelope
+            if name == "Elliptic Envelope":
+                print("Visualizing Elliptic Envelope decision boundary (test)...")
+                # Need un-PCA'd data to use visualization
+                # Reload raw data and rescale to match PCA shape
+                from data_loader import getDataFromCSV
+                X_train_scaled, y_train, X_test_scaled, _ = getDataFromCSV(
+                    test_file)
+                visualize_elliptic_envelope(
+                    X_train_scaled, X_test_scaled, model, scores)
 
 
 def main():
