@@ -56,11 +56,11 @@ To set up your Python on your workstation:
 ### 6. Download [CIC-IoT-2023 data](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset) set
 ### 7. Extract archive.zip download
 #### Download Merged01.csv, Merged02.csv Merged03.csv, Merged04.csv, and Merged05.csv from website and place in data directory
-### 8. Run Test
+### 8. Run Training
 #### changed directory to source: ```cd to evade```
-#### run training by typing: ```python source/main.py --mode train --data_dir ./data --model_dir ./trained_model```
-### 9. Run Training
+#### run training by typing: ```python source/main.py --mode train --data_dir ../data --model_dir ../trained_model```
+### 9. Run Test
 #### You can move code to test on other devices such as a Raspberry Pi:  ```scp -r trained_models_bundle.zip david@192.168.1.249:/home/david/source/repos/evade/trained_models/```
-#### run test by typing: ```python source/main.py --mode test --data_dir ./data --model_dir ./trained_model```
+#### run test by typing: ```python source/main.py --mode test --data_dir ../data --model_dir ../trained_models```
 
 
