@@ -71,6 +71,11 @@ def evaluate_model(y_true, y_pred, scores, model_name="Model"):
     print(f"ROC-AUC:   {roc_auc:.2f}")
 
 
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.covariance import EllipticEnvelope
+
 def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_components=2):
     """
     Visualize the Elliptic Envelope with the decision ellipse after dimensionality reduction.
@@ -92,24 +97,29 @@ def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_compo
         contamination=0.15, support_fraction=0.8, random_state=42)
     vis_model.fit(X_train_2d)
 
-    # Create grid for visualization
+    # Create grid for decision boundary
     xx, yy = np.meshgrid(np.linspace(X_train_2d[:, 0].min() - 1, X_train_2d[:, 0].max() + 1, 500),
                          np.linspace(X_train_2d[:, 1].min() - 1, X_train_2d[:, 1].max() + 1, 500))
     Z = vis_model.decision_function(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
 
-    # Plot the results
+    # Plot
     plt.figure(figsize=(10, 6))
-    plt.scatter(X_test_2d[:, 0], X_test_2d[:, 1], c=decision_scores,
-                cmap='coolwarm', s=50, edgecolor='k', label='Test Data')
-    plt.colorbar(label='Decision Score')
-    plt.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
-                color='green', s=20, label='Training Data', alpha=0.6)
-    plt.contour(xx, yy, Z, levels=[0], linewidths=2,
-                colors='red')  # Decision ellipse
+    plt.rcParams.update({'font.size': 24})
+    scatter = plt.scatter(X_test_2d[:, 0], X_test_2d[:, 1], c=decision_scores,
+                          cmap='coolwarm', s=80, edgecolor='k', marker='+', label='Test Data')
+    plt.colorbar(scatter, label='Decision Score')
 
-    plt.title("Elliptic Envelope - Outlier Detection with PCA")
-    plt.xlabel("PCA Component 1")
-    plt.ylabel("PCA Component 2")
-    plt.legend()
+    plt.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                facecolors='none', edgecolors='green', s=70, label='Training Data')
+
+    plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='red')
+
+    plt.title("Elliptic Envelope Decision Boundary", fontsize=24)
+    #plt.xlabel("PCA Component 1", fontsize=14)
+    #plt.ylabel("PCA Component 2", fontsize=14)
+    plt.legend(fontsize=22)
+    plt.tight_layout()
+    #plt.savefig("elliptic_envelope_plot.eps", format='eps')
     plt.show()
+
