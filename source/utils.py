@@ -121,5 +121,5 @@ def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_compo
     plt.legend(fontsize=22)
     plt.tight_layout()
     #plt.savefig("elliptic_envelope_plot.eps", format='eps')
-    plt.show()
+    #plt.show()
 

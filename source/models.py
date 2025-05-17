@@ -54,7 +54,7 @@ def train_isolation_forest(X_train, X_test, use_percentile_threshold=True):
     return model, y_pred, decision_scores
 
 
-def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True):
+def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True, contamination=0.25):
     """
     Train an Elliptic Envelope model and generate predictions and decision scores.
 
@@ -62,6 +62,7 @@ def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True):
         X_train (array-like): Training features.
         X_test (array-like): Test features.
         use_percentile_threshold (bool): Whether to use percentile thresholding on decision scores.
+        contamination (float): Proportion of outliers in the data (between 0 and 0.5).
 
     Returns:
         model: Trained Elliptic Envelope model.
@@ -69,7 +70,10 @@ def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True):
         decision_scores (np.ndarray): Anomaly scores (higher = more normal).
     """
     model = EllipticEnvelope(
-        contamination=0.15, support_fraction=0.8, random_state=42)
+        contamination=contamination,
+        support_fraction=0.8,
+        random_state=42
+    )
 
     # Train and track memory
     tracemalloc.start()
@@ -78,15 +82,14 @@ def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True):
     train_time = (time.time() - start_train) * 1000
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    print(
-        f"Training took {train_time:.2f} ms | Peak Memory: {peak / 1024:.2f} KB")
+    print(f"Training took {train_time:.2f} ms | Peak Memory: {peak / 1024:.2f} KB")
 
     # Predict and track memory
     tracemalloc.start()
     start_pred = time.time()
     decision_scores = model.decision_function(X_test)
     if use_percentile_threshold:
-        threshold = np.percentile(decision_scores, 15)
+        threshold = np.percentile(decision_scores, contamination * 100)
         y_pred = (decision_scores < threshold).astype(int)
     else:
         y_pred = model.predict(X_test)
@@ -94,11 +97,9 @@ def train_elliptic_envelope(X_train, X_test, use_percentile_threshold=True):
     pred_time = (time.time() - start_pred) * 1000
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    print(
-        f"Prediction took {pred_time:.2f} ms | Peak Memory: {peak / 1024:.2f} KB")
+    print(f"Prediction took {pred_time:.2f} ms | Peak Memory: {peak / 1024:.2f} KB")
 
     return model, y_pred, decision_scores
-
 
 def train_lof(X_train, X_test, use_percentile_threshold=True):
     """
