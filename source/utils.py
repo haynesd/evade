@@ -82,34 +82,49 @@ def visualize_elliptic_envelope(X_train, X_test, model, decision_scores, n_compo
         decision_scores (array-like): Decision function scores for the test set.
         n_components (int): Number of components for PCA.
     """
-    # Reduce to 2 dimensions for visualization
+    # Reduce to 2D for visualization
     pca = PCA(n_components=n_components)
     X_train_2d = pca.fit_transform(X_train)
     X_test_2d = pca.transform(X_test)
 
-    # Train a new Elliptic Envelope on reduced data for visualization
+    # Fit visualization model on 2D data
     vis_model = EllipticEnvelope(
         contamination=0.15, support_fraction=0.8, random_state=42)
     vis_model.fit(X_train_2d)
 
-    # Create grid for visualization
+    # Grid for contour plot
     xx, yy = np.meshgrid(np.linspace(X_train_2d[:, 0].min() - 1, X_train_2d[:, 0].max() + 1, 500),
                          np.linspace(X_train_2d[:, 1].min() - 1, X_train_2d[:, 1].max() + 1, 500))
     Z = vis_model.decision_function(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
 
-    # Plot the results
-    plt.figure(figsize=(10, 6))
-    plt.scatter(X_test_2d[:, 0], X_test_2d[:, 1], c=decision_scores,
-                cmap='coolwarm', s=50, edgecolor='k', label='Test Data')
-    plt.colorbar(label='Decision Score')
-    plt.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
-                color='green', s=20, label='Training Data', alpha=0.6)
-    plt.contour(xx, yy, Z, levels=[0], linewidths=2,
-                colors='red')  # Decision ellipse
+    # Create figure
+    plt.figure(figsize=(12, 8))
 
-    plt.title("Elliptic Envelope - Outlier Detection with PCA")
-    plt.xlabel("PCA Component 1")
-    plt.ylabel("PCA Component 2")
-    plt.legend()
+    # Plot test data (larger '+' markers)
+    scatter_test = plt.scatter(
+        X_test_2d[:, 0], X_test_2d[:, 1], c=decision_scores, cmap='coolwarm',
+        s=80, marker='+', edgecolor='k', linewidths=1.5, label='Test Data'
+    )
+
+    # Colorbar with larger label font
+    cbar = plt.colorbar(scatter_test)
+    cbar.set_label('Decision Score', fontsize=16)
+    cbar.ax.tick_params(labelsize=14)
+
+    # Plot training data (larger 'o' markers)
+    plt.scatter(
+        X_train_2d[:, 0], X_train_2d[:, 1],
+        color='green', s=40, marker='o', label='Training Data', alpha=0.6
+    )
+
+    # Contour
+    plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='red')
+
+    # Labels and legend
+    plt.title("EVADE: Elliptic Envelope Decision Boundary", fontsize=20)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(fontsize=15)
+    plt.tight_layout()
     plt.show()
