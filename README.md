@@ -5,7 +5,7 @@ This repository contains the implementation of EVADE, A Lightweight, Unsupervise
 ** The data set and code for research purposes only**
 
 ## Reference
-[Paper TBP]
+D. Haynes, P. H. Phung and B. Wang, "[EVADE: A Lightweight Unsupervised Malicious Detection over Encrypted Traffic](https://ieeexplore.ieee.org/abstract/document/11310704)," MILCOM 2025 - 2025 IEEE Military Communications Conference (MILCOM), Los Angeles, CA, USA, 2025, pp. 974-980.
 
 The CIC-IoT-2023 data is downloadable as Merged01.csv files via [Kaggle](https://www.kaggle.com/datasets/madhavmalhotra/unb-cic-iot-dataset).
 
